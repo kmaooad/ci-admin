@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -40,24 +41,36 @@ namespace KmaOoad18.CI.Admin
         static void CreateDefs()
         {
             var a = CiBuildManager.Create();
-            
+
             var repos = (a.GetRepos()).GetAwaiter().GetResult().OrderBy(r => r.Name).ToList();
+
             Console.WriteLine($"Found {repos.Count} repos");
+
+            var buildDefs = a.GetBuildDefs().GetAwaiter().GetResult();
+
+            Console.WriteLine($"{buildDefs.Count} build defs already exist");
+
+
             foreach (var r in repos)
             {
                 try
                 {
-                    Console.Write($"Creating CI build for {r.Name}....");
+                    if (!buildDefs.Contains(CiBuildManager.BuildDefName(r.Name)))
+                    {
+                        Console.Write($"Creating CI build for {r.Name}....");
 
-                    var result = a.CreateDefinition(r.Name, new Uri(r.CloneUrl)).GetAwaiter().GetResult();
+                        var result = a.CreateDefinition(r.Name, new Uri(r.CloneUrl)).GetAwaiter().GetResult();
 
-                    Console.WriteLine(result ? "CREATED" : "SKIPPED");
+                        Console.WriteLine(result ? "CREATED" : "SKIPPED");
+                    }
+
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"ERROR: {ex.Message}");
                 }
             }
+
         }
     }
 }

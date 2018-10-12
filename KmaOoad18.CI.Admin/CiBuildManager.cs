@@ -90,6 +90,11 @@ namespace KmaOoad18.CI.Admin
                 await client.Repository.Content.CreateFile(repoId.Value, filePath, new CreateFileRequest($"Create {filePath}", content, true));
         }
 
+        public async Task<List<string>> GetBuildDefs()
+        => (await _buildClient.GetDefinitionsAsync(project: vsts_projectName)).Select(bd => bd.Name).ToList();
+
+
+
         public async Task DeleteDefinitions()
         {
             var defs = await _buildClient.GetDefinitionsAsync(project: vsts_projectName);
@@ -138,6 +143,8 @@ namespace KmaOoad18.CI.Admin
 
             var summary = new StringBuilder();
 
+            summary.AppendLine("# Builds").AppendLine().AppendLine();
+
             var notes = new[] {
                "- List of students is re-generated nightly",
                "- If your build shows as never built, make any new commit (or edit any file on GitHub) to trigger CI"
@@ -146,9 +153,7 @@ namespace KmaOoad18.CI.Admin
             foreach (var n in notes)
                 summary.AppendLine(n);
 
-            summary.AppendLine();
-            summary.AppendLine();
-            summary.Append("| Student |");
+            summary.AppendLine().AppendLine().Append("| Student |");
 
             var weeks = summaryData.Keys.Select(k => k.Week).Distinct().OrderBy(w => w).ToList();
             var students = summaryData.Keys.Select(k => k.Student).Distinct().OrderBy(s => s).ToList();
@@ -157,6 +162,7 @@ namespace KmaOoad18.CI.Admin
             {
                 summary.Append($" {w} |");
             }
+
             summary.AppendLine();
 
             summary.Append("| --- |");
@@ -190,9 +196,11 @@ namespace KmaOoad18.CI.Admin
             return summary.ToString();
         }
 
+        public static string BuildDefName(string repoName) => $"{repoName}-ci";
+
         public async Task<bool> CreateDefinition(string repoName, Uri cloneUrl)
         {
-            var buildDefName = $"{repoName}-ci";
+            var buildDefName = BuildDefName(repoName);
 
             var existing = await GetBuildDefinitionReference(buildDefName);
 
