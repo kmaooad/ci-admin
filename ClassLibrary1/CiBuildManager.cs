@@ -16,32 +16,38 @@ using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.IO;
 using System.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace KmaOoad18.CI.Admin
 {
     public class CiBuildManager
     {
-        static readonly String vsts_collectionUri = ConfigurationManager.AppSettings[nameof(vsts_collectionUri)];
-        static readonly String vsts_projectName = ConfigurationManager.AppSettings[nameof(vsts_projectName)];
-        static readonly String vsts_pat = ConfigurationManager.AppSettings[nameof(vsts_pat)];
-        static readonly string vsts_projectId = ConfigurationManager.AppSettings[nameof(vsts_projectId)];
-        static readonly string vsts_githubConnection = ConfigurationManager.AppSettings[nameof(vsts_githubConnection)];
-        static readonly string github_pat = ConfigurationManager.AppSettings[nameof(github_pat)];
+        readonly String vsts_projectName;
+        readonly string vsts_projectId;
+        readonly string vsts_githubConnection;
+        readonly string github_pat;
 
+        private readonly ILogger log;
         private VssConnection _connection;
         private BuildHttpClient _buildClient;
         private ConnectedServiceHttpClient _serviceClient;
         private ProjectHttpClient _projectClient;
 
-        private CiBuildManager()
+        private CiBuildManager(ILogger log, Config config)
         {
+            this.log = log;
+
+            vsts_githubConnection = config.VstsGitHubConnection;
+            vsts_projectName = config.VstsProjectName;
+            vsts_projectId = config.VstsProjectId;
+            github_pat = config.GitHubPat;
         }
 
-        public static CiBuildManager Create()
+        public static CiBuildManager Create(ILogger log, Config config)
         {
-            var mgr = new CiBuildManager();
+            var mgr = new CiBuildManager(log, config);
 
-            mgr._connection = new VssConnection(new Uri(vsts_collectionUri), new VssBasicCredential(string.Empty, vsts_pat));
+            mgr._connection = new VssConnection(new Uri(config.VstsCollectionUri), new VssBasicCredential(string.Empty, config.VstsPat));
 
             mgr._buildClient = mgr._connection.GetClient<BuildHttpClient>();
             mgr._serviceClient = mgr._connection.GetClient<ConnectedServiceHttpClient>();
@@ -54,11 +60,11 @@ namespace KmaOoad18.CI.Admin
         {
             var repos = (await GetRepos()).OrderBy(r => r.Name).ToList();
 
-            Console.WriteLine($"Found {repos.Count} repos");
+            log.LogInformation($"Found {repos.Count} repos");
 
             var buildDefs = await GetBuildDefs();
 
-            Console.WriteLine($"{buildDefs.Count} build defs already exist");
+            log.LogInformation($"{buildDefs.Count} build defs already exist");
 
 
             foreach (var r in repos)
@@ -67,17 +73,17 @@ namespace KmaOoad18.CI.Admin
                 {
                     if (!buildDefs.Contains(CiBuildManager.BuildDefName(r.Name)))
                     {
-                        Console.Write($"Creating CI build for {r.Name}....");
+                        log.LogInformation($"Creating CI build for {r.Name}....");
 
                         var result = await CreateDefinition(r.Name, new Uri(r.CloneUrl));
 
-                        Console.WriteLine(result ? "CREATED" : "SKIPPED");
+                        log.LogInformation(result ? "CREATED" : "SKIPPED");
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ERROR: {ex.Message}");
+                    log.LogInformation($"ERROR: {ex.Message}");
                 }
             }
         }
@@ -275,5 +281,14 @@ namespace KmaOoad18.CI.Admin
             return true;
         }
 
+        public class Config
+        {
+            public string VstsCollectionUri { get; set; }
+            public string VstsGitHubConnection { get; set; }
+            public string VstsProjectName { get; set; }
+            public string VstsPat { get; set; }
+            public string VstsProjectId { get; set; }
+            public string GitHubPat { get; set; }
+        }
     }
 }
