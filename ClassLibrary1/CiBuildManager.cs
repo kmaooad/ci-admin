@@ -56,7 +56,7 @@ namespace KmaOoad18.CI.Admin
             return mgr;
         }
 
-        public async Task CreateDefs()
+        public async Task<int> CreateDefs()
         {
             var repos = (await GetRepos()).OrderBy(r => r.Name).ToList();
 
@@ -66,6 +66,7 @@ namespace KmaOoad18.CI.Admin
 
             log.LogInformation($"{buildDefs.Count} build defs already exist");
 
+            int created = 0;
 
             foreach (var r in repos)
             {
@@ -77,6 +78,8 @@ namespace KmaOoad18.CI.Admin
 
                         var result = await CreateDefinition(r.Name, new Uri(r.CloneUrl));
 
+                        created++;
+
                         log.LogInformation(result ? "CREATED" : "SKIPPED");
                     }
 
@@ -86,6 +89,8 @@ namespace KmaOoad18.CI.Admin
                     log.LogInformation($"ERROR: {ex.Message}");
                 }
             }
+
+            return created;
         }
 
         public async Task<List<Repository>> GetRepos()
@@ -184,7 +189,7 @@ namespace KmaOoad18.CI.Admin
             summary.AppendLine("# Builds").AppendLine().AppendLine();
 
             var notes = new[] {
-               "- List of students is re-generated nightly",
+               "- List of students is re-generated hourly",
                "- If your build shows as never built, make any new commit (or edit any file on GitHub) to trigger CI"
             };
 

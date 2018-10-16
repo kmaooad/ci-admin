@@ -23,18 +23,25 @@ namespace KmaOoad18.CI.Admin
 
             var a = CiBuildManager.Create(log, c);
 
-            await a.CreateDefs();
+            var created = await a.CreateDefs();
 
-            log.LogInformation("Generating build summary...");
-            
-            var buildSummary = await a.GenerateBuildSummary();
+            if (created > 0)
+            {
+                log.LogInformation("Generating build summary...");
 
-            log.LogInformation("Uploading build summary...");
-            a.UploadFile("course-home", "builds.md", buildSummary).GetAwaiter().GetResult();
-            log.LogInformation("Done!");
+                var buildSummary = await a.GenerateBuildSummary();
+
+                log.LogInformation("Uploading build summary...");
+                a.UploadFile("course-home", "builds.md", buildSummary).GetAwaiter().GetResult();
+                log.LogInformation("Done!");
+            }
+            else
+            {
+                log.LogInformation("Nothing to do here!");
+            }
         }
 
-        
+
 
     }
 }
