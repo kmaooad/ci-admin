@@ -1,22 +1,15 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.DistributedTask.WebApi;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
 using Octokit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Net.Http;
-using System.Text;
-using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.IO;
-using System.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace KmaOoad18.CI.Admin
 {
@@ -99,7 +92,7 @@ namespace KmaOoad18.CI.Admin
             var tokenAuth = new Credentials(github_pat);
             client.Credentials = tokenAuth;
 
-            const string repoNamePattern = @"^(assignment-w\d-.+)$";
+            const string repoNamePattern = @"^(assignment-w(\d){1,2}-.+)$";
 
             var repos = (await client.Repository.GetAllForOrg("kmaooad18"))
             .Where(r => Regex.IsMatch(r.Name, repoNamePattern)).ToList();
@@ -161,7 +154,7 @@ namespace KmaOoad18.CI.Admin
 
         public async Task<string> GenerateBuildSummary()
         {
-            const string defRegex = @"^assignment-(?<week>w\d)-(?<student>.+)-ci$";
+            const string defRegex = @"^assignment-(?<week>w(\d){1,2})-(?<student>.+)-ci$";
 
             var defs = await _buildClient.GetDefinitionsAsync(project: vsts_projectName);
 
@@ -198,7 +191,8 @@ namespace KmaOoad18.CI.Admin
 
             summary.AppendLine().AppendLine().Append("| Student |");
 
-            var weeks = summaryData.Keys.Select(k => k.Week).Distinct().OrderBy(w => w).ToList();
+            var weeks = summaryData.Keys.Select(k => k.Week).Distinct().OrderBy(w => Convert.ToInt32(w.Replace("w",""))).ToList();
+
             var students = summaryData.Keys.Select(k => k.Student).Distinct().OrderBy(s => s).ToList();
 
             foreach (var w in weeks)
