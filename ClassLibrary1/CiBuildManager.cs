@@ -107,16 +107,19 @@ namespace KmaOoad18.CI.Admin
         => (await _buildClient.GetDefinitionsAsync(project: vsts_projectName)).FirstOrDefault(d => d.Name == name);
 
         public async Task UploadFile(string repo, string filePath, string content)
+        => await UploadFile(github_pat, repo, filePath, content);
+
+        public static async Task UploadFile(string githubPat, string repo, string filePath, string content)
         {
             var client = new GitHubClient(new Octokit.ProductHeaderValue("kmaooad18-ci"));
+
+            var tokenAuth = new Credentials(githubPat);
+            client.Credentials = tokenAuth;
 
             var repoId = (await client.Repository.GetAllForOrg("kmaooad18")).FirstOrDefault(r => r.Name.ToLower() == repo.ToLower())?.Id;
 
             if (!repoId.HasValue)
-                return;
-
-            var tokenAuth = new Credentials(github_pat);
-            client.Credentials = tokenAuth;
+                return;            
 
             var file = (await client.Repository.Content.GetAllContents(repoId.Value)).FirstOrDefault(f => f.Path.ToLower() == filePath.ToLower());
 
@@ -171,7 +174,7 @@ namespace KmaOoad18.CI.Admin
                     var w = defSpecs["week"].Value;
                     var s = defSpecs["student"].Value;
 
-                    var defBadge = $" [![Build Status](https://dev.azure.com/ashabinskiy/KmaOoad18/_apis/build/status/assignment-{w}-{s}-ci)]({url}) |";
+                    var defBadge = $" [![Build Status](https://dev.azure.com/ashabinskiy/KmaOoad18/_apis/build/status/assignment-{w}-{s}-ci?label==)]({url}) |";
 
                     summaryData.Add((w, s), defBadge);
                 }
@@ -191,7 +194,7 @@ namespace KmaOoad18.CI.Admin
 
             summary.AppendLine().AppendLine().Append("| Student |");
 
-            var weeks = summaryData.Keys.Select(k => k.Week).Distinct().OrderBy(w => Convert.ToInt32(w.Replace("w",""))).ToList();
+            var weeks = summaryData.Keys.Select(k => k.Week).Distinct().OrderBy(w => Convert.ToInt32(w.Replace("w", ""))).ToList();
 
             var students = summaryData.Keys.Select(k => k.Student).Distinct().OrderBy(s => s).ToList();
 
