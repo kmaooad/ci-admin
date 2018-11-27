@@ -85,17 +85,16 @@ namespace KmaOoad18.CI.Admin
 
             return created;
         }
+        public async Task<List<Repository>> GetRepos() => await GetRepos(github_pat, "kmaooad18", @"^(assignment-w(\d){1,2}-.+)$");
 
-        public async Task<List<Repository>> GetRepos()
+        public static async Task<List<Repository>> GetRepos(string pat, string org, string repoRegex)
         {
             var client = new GitHubClient(new Octokit.ProductHeaderValue("kmaooad18-ci"));
-            var tokenAuth = new Credentials(github_pat);
+            var tokenAuth = new Credentials(pat);
             client.Credentials = tokenAuth;
-
-            const string repoNamePattern = @"^(assignment-w(\d){1,2}-.+)$";
-
-            var repos = (await client.Repository.GetAllForOrg("kmaooad18"))
-            .Where(r => Regex.IsMatch(r.Name, repoNamePattern)).ToList();
+            
+            var repos = (await client.Repository.GetAllForOrg(org))
+            .Where(r => Regex.IsMatch(r.Name, repoRegex)).ToList();
 
             return repos;
         }
@@ -119,10 +118,10 @@ namespace KmaOoad18.CI.Admin
             var repoId = (await client.Repository.GetAllForOrg("kmaooad18")).FirstOrDefault(r => r.Name.ToLower() == repo.ToLower())?.Id;
 
             if (!repoId.HasValue)
-                return;            
+                return;
 
-            var file = (await client.Repository.Content.GetAllContents(repoId.Value)).FirstOrDefault(f => f.Path.ToLower() == filePath.ToLower());
-
+            var file = (await client.Repository.Content.GetAllContents(repoId.Value, filePath)).FirstOrDefault();
+            
             if (file != null)
                 await client.Repository.Content.UpdateFile(repoId.Value, filePath, new UpdateFileRequest($"Update {file.Name}", content, file.Sha, true));
             else

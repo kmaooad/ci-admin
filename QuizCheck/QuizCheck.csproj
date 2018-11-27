@@ -54,9 +54,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClassLibrary1\ClassLibrary1.csproj">
+    <ProjectReference Include="..\ClassLibrary1\BuildManager.csproj">
       <Project>{9793d5b3-ae69-4f95-adf8-4ab18ecb70af}</Project>
-      <Name>ClassLibrary1</Name>
+      <Name>BuildManager</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

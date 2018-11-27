@@ -7,7 +7,7 @@
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.23" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClassLibrary1\ClassLibrary1.csproj" />
+    <ProjectReference Include="..\ClassLibrary1\BuildManager.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
