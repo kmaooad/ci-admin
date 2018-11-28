@@ -12,7 +12,7 @@ namespace FileUploader
         [Fact]
         public async Task Test1()
         {
-            var pat = "5e91a39ae3938439225a68b576b42001fac65c8d";
+            var pat = "";
 
             var files = new List<(string source, string target)>()
             {
