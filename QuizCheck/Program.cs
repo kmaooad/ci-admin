@@ -72,7 +72,7 @@ namespace QuizCheck
                     {
                         Console.WriteLine($"No commit found");
                     }
-
+                    
                     var commitSha = commit.Sha;
 
                     var refs = await client.Git.Reference.GetAll(r.Id);
